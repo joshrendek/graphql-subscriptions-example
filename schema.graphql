@@ -1,0 +1,8 @@
+type Example {
+	message: String
+}
+
+
+type Subscription {
+    exampleAdded: Example!
+}

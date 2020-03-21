@@ -1,11 +1,21 @@
 package actions
 
 import (
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/envy"
 	forcessl "github.com/gobuffalo/mw-forcessl"
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
+	"github.com/gorilla/websocket"
 	"github.com/unrolled/secure"
+	"gqlsub/exampleql"
+	"net/http"
+	"time"
+
+	"github.com/rs/cors"
+
 
 	csrf "github.com/gobuffalo/mw-csrf"
 	i18n "github.com/gobuffalo/mw-i18n"
@@ -51,6 +61,28 @@ func App() *buffalo.App {
 		// Setup and use translations:
 		app.Use(translations())
 
+
+
+		c := cors.New(cors.Options{
+			AllowedOrigins:   []string{"http://localhost:3000"},
+			AllowCredentials: true,
+		})
+
+		srv := handler.New(exampleql.NewExecutableSchema(exampleql.New()))
+		srv.AddTransport(transport.POST{})
+		srv.AddTransport(transport.Websocket{
+			KeepAlivePingInterval: 10 * time.Second,
+			Upgrader: websocket.Upgrader{
+				CheckOrigin: func(r *http.Request) bool {
+					return true
+				},
+			},
+		})
+
+
+		app.ANY("/query", buffalo.WrapHandler(c.Handler(srv)))
+
+		app.GET("/play", buffalo.WrapHandler(playground.Handler("Example", "/query")))
 		app.GET("/", HomeHandler)
 
 		app.ServeFiles("/", assetsBox) // serve files from the public directory

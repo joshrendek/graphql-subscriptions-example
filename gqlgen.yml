@@ -1,0 +1,13 @@
+struct_tag: json
+schema:
+- schema.graphql
+exec:
+  filename: exampleql/exec.go
+  package: exampleql
+model:
+  filename: exampleql/models.go
+  package: exampleql
+resolver:
+  filename: exampleql/resolver.go
+  type: Resolver
+
